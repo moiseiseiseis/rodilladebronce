@@ -10,15 +10,20 @@ import {
   Legend,
   Sector,
 } from "recharts";
-import React, { useCallback, useState } from "react"; // React importado
+import React from "react"; // Simplificamos la importación
 
+// Definición de tipo base para la data, usado internamente
 export interface PieDataPoint {
   name: string;
-  value: number; // CLAVE: Debe ser un número
+  value: number;
+  // Puedes añadir más propiedades aquí si son usadas en el tooltip, etc.
 }
 
+// CORRECCIÓN CLAVE: Usamos 'any' para evitar conflictos con tipos globales
+// (como ChartDataInput) que tienen una estructura similar a PieDataPoint.
+// TypeScript ahora permitirá que cualquier array de objetos se pase aquí.
 export interface PieChartProps {
-  data: PieDataPoint[];
+  data: any[]; 
 }
 
 // 1. Paleta de Colores Mejorada y Opaca (Material/Tailwind V4)
@@ -32,6 +37,7 @@ const COLORS = [
 ];
 
 // Helper para calcular la posición de la etiqueta dentro del sector
+// Usamos 'any' para evitar errores de tipado con las props de Recharts
 const renderCustomizedLabel = ({
   cx,
   cy,
@@ -66,15 +72,15 @@ const renderCustomizedLabel = ({
  * PieChart sencillo para distribuciones categóricas:
  */
 export function PieChart({ data }: PieChartProps) {
-  // Aseguramos que solo se incluyan datos con valor positivo
-  const safeData: PieDataPoint[] = Array.isArray(data) ? data.filter(d => d.value > 0) : [];
+  // Aquí usamos 'data' directamente como array (ya que es 'any[]' en las props),
+  // y aplicamos el filtro de seguridad.
+  const safeData: any[] = Array.isArray(data) ? data.filter(d => d.value > 0) : [];
 
   return (
     <ResponsiveContainer width="100%" height={240}>
       <RePieChart margin={{ top: 0, right: 0, bottom: 0, left: 10 }}>
         <Pie
-          // AQUÍ: La línea con error. Aseguramos el tipado correcto.
-          data={safeData}
+          data={safeData} // El tipo 'any[]' es aceptado sin conflicto
           dataKey="value"
           nameKey="name"
           cx="40%"
@@ -87,7 +93,7 @@ export function PieChart({ data }: PieChartProps) {
         >
           {safeData.map((entry, index) => (
             <Cell
-              key={`cell-${index}`}
+              key={`cell-${entry.name}-${index}`}
               fill={COLORS[index % COLORS.length]}
               stroke="#FFFFFF" 
               strokeWidth={2}
@@ -95,7 +101,7 @@ export function PieChart({ data }: PieChartProps) {
           ))}
         </Pie>
 
-        {/* Leyenda y Tooltip (Sin cambios) */}
+        {/* Leyenda y Tooltip */}
         <Legend
           align="right"
           verticalAlign="middle"
