@@ -20,71 +20,71 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend, // <-- ¡FALTABA ESTE IMPORTE!
+  Legend,
 } from "recharts";
 
 // --- CONFIGURACIÓN DE COLORES Y ESTILOS ---
 const COLORS = {
-  primary: "#2563EB", 
-  secondary: "#10B981", 
+  primary: "#2563EB",
+  secondary: "#10B981",
   pie: ["#2563EB", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#14B8A6", "#374151", "#D1D5DB"],
 };
 
 // Función auxiliar para formatear la duración en minutos o segundos
 function formatDuration(seconds: number): string {
-    if (seconds >= 60) {
-        return `${(seconds / 60).toFixed(1)} min`;
-    }
-    return `${seconds.toFixed(0)} s`;
+  if (seconds >= 60) {
+    return `${(seconds / 60).toFixed(1)} min`;
+  }
+  return `${seconds.toFixed(0)} s`;
 }
 
 // Función auxiliar para preparar datos de conteo por fase (Defensiva)
 function preparePhaseCountData(sessions: Session[]): { name: string; value: number }[] {
-    const countMap = sessions.reduce((acc, session) => {
-        if (!session) return acc; // Añadida defensa contra elementos nulos en el array
-        const phase = session.phaseLabel || 'Sin Fase';
-        acc[phase] = (acc[phase] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
+  const countMap = sessions.reduce((acc, session) => {
+    if (!session) return acc;
+    const phase = session.phaseLabel || 'Sin Fase';
+    acc[phase] = (acc[phase] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
-    return Object.entries(countMap).map(([name, value]) => ({
-        name,
-        value,
-    })).sort((a, b) => b.value - a.value);
+  return Object.entries(countMap).map(([name, value]) => ({
+    name,
+    value,
+  })).sort((a, b) => b.value - a.value);
 }
 
 // Función auxiliar para preparar datos de conteo por paciente (Top N) (Defensiva)
 function preparePatientCountData(sessions: Session[]): { name: string; value: number }[] {
-    const countMap = sessions.reduce((acc, session) => {
-        if (!session || !session.patient) return acc; // Añadida defensa
-        const patientName = session.patient.fullName || session.patient.name || 'Paciente Desconocido';
-        acc[patientName] = (acc[patientName] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
+  const countMap = sessions.reduce((acc, session) => {
+    if (!session || !session.patient) return acc;
+    const patientName = session.patient.fullName || session.patient.name || 'Paciente Desconocido';
+    acc[patientName] = (acc[patientName] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
-    return Object.entries(countMap).map(([name, value]) => ({
-        name,
-        value,
-    }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 8); 
+  return Object.entries(countMap).map(([name, value]) => ({
+    name,
+    value,
+  }))
+  .sort((a, b) => b.value - a.value)
+  .slice(0, 8); 
 }
 
 // Estilos unificados basados en tu LineChart.tsx
 const CHART_STYLE = {
-    tick: { fontSize: 10, fill: "var(--text-muted)" },
-    axisLine: false,
-    tickLine: false,
-    tooltipContentStyle: {
-        borderRadius: 12,
-        border: "1px solid rgba(148, 163, 184, 0.5)",
-        backgroundColor: "rgba(15, 23, 42, 0.96)", 
-        padding: "8px 10px",
-    },
-    tooltipLabelStyle: { fontSize: 11, color: "#e5e7eb", marginBottom: 4 },
-    tooltipItemStyle: { fontSize: 11, color: "#e5e7eb" },
-    gridStroke: "rgba(148, 163, 184, 0.4)",
-    cursorStroke: "rgba(148, 163, 184, 0.35)",
+  tick: { fontSize: 10, fill: "var(--text-muted)" },
+  axisLine: false,
+  tickLine: false,
+  tooltipContentStyle: {
+    borderRadius: 12,
+    border: "1px solid rgba(148, 163, 184, 0.5)",
+    backgroundColor: "rgba(15, 23, 42, 0.96)", 
+    padding: "8px 10px",
+  },
+  tooltipLabelStyle: { fontSize: 11, color: "#e5e7eb", marginBottom: 4 },
+  tooltipItemStyle: { fontSize: 11, color: "#e5e7eb" },
+  gridStroke: "rgba(148, 163, 184, 0.4)",
+  cursorStroke: "rgba(148, 163, 184, 0.35)",
 };
 
 
@@ -104,8 +104,10 @@ export default function SessionsAnalyticsPage() {
     stats: [],
   });
 
+  // --- EFECTO DE CARGA DE DATOS ---
   useEffect(() => {
-    if (!user || status === "loading") return;
+    // Espera hasta que el estado de autenticación sea 'authenticated' y el 'user' esté disponible.
+    if (!user || status !== "authenticated") return; 
 
     let cancelled = false;
 
@@ -147,13 +149,13 @@ export default function SessionsAnalyticsPage() {
   
   const { loading, error, stats, sessions } = state;
 
-  // Prepara los datos de los gráficos de pastel (INCONDICIONAL)
+  // Prepara los datos de los gráficos de pastel usando useMemo para optimización
   const phaseCountData = useMemo(() => preparePhaseCountData(sessions), [sessions]);
   const patientCountData = useMemo(() => preparePatientCountData(sessions), [sessions]);
 
   // --- RETORNOS CONDICIONALES ---
 
-  if (status === "loading") {
+  if (status === "loading" || loading) {
     return (
       <div className="flex w-full items-center justify-center">
         <Spinner />
@@ -183,12 +185,8 @@ export default function SessionsAnalyticsPage() {
           </div>
         )}
 
-        {loading ? (
-          <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-            <Spinner size="sm" />
-            <span>Cargando datos...</span>
-          </div>
-        ) : stats.length === 0 ? (
+        {/* Carga y estados vacíos */}
+        {stats.length === 0 && !error ? (
           <p className="text-xs text-[var(--text-muted)]">
             No hay sesiones suficientes para generar el análisis.
           </p>
@@ -245,23 +243,28 @@ export default function SessionsAnalyticsPage() {
                       cy="50%"
                       outerRadius={80}
                       labelLine={false}
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                      // CORRECCIÓN: Asegurar que percent es un número válido
+                      label={({ name, percent }) => {
+                          const safePercent = typeof percent === 'number' ? percent : 0;
+                          return `${name} (${(safePercent * 100).toFixed(0)}%)`;
+                      }}
                       isAnimationActive={true}
                     >
                       {phaseCountData.map((_entry, index) => (
                         <Cell 
-                            key={`cell-${index}`} 
-                            fill={COLORS.pie[index % COLORS.pie.length]} 
-                            stroke="none"
+                          key={`cell-${index}`} 
+                          fill={COLORS.pie[index % COLORS.pie.length]} 
+                          stroke="none"
                         />
                       ))}
                     </Pie>
                     <Tooltip 
-                        contentStyle={CHART_STYLE.tooltipContentStyle}
-                        labelStyle={CHART_STYLE.tooltipLabelStyle}
-                        itemStyle={CHART_STYLE.tooltipItemStyle}
-                        formatter={(value: number, name: string) => [`${value} sesiones`, name]}
+                      contentStyle={CHART_STYLE.tooltipContentStyle}
+                      labelStyle={CHART_STYLE.tooltipLabelStyle}
+                      itemStyle={CHART_STYLE.tooltipItemStyle}
+                      formatter={(value: number, name: string) => [`${value} sesiones`, name]}
                     />
+                    <Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ fontSize: '10px' }} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -286,24 +289,29 @@ export default function SessionsAnalyticsPage() {
                       cy="50%"
                       outerRadius={80}
                       labelLine={false}
-                      label={({ name, percent }) => `${name.split(' ')[0]} (${(percent * 100).toFixed(0)}%)`}
+                      // CORRECCIÓN: Se verifica name y percent para evitar errores de tipo
+                      label={({ name, percent }) => {
+                          const labelName = typeof name === 'string' ? name : 'N/A';
+                          const safePercent = typeof percent === 'number' ? percent : 0;
+                          return `${labelName.split(' ')[0]} (${(safePercent * 100).toFixed(0)}%)`;
+                      }}
                       isAnimationActive={true}
                     >
                       {patientCountData.map((_entry, index) => (
                         <Cell 
-                            key={`cell-${index}`} 
-                            fill={COLORS.pie[index % COLORS.pie.length]} 
-                            stroke="none"
+                          key={`cell-${index}`} 
+                          fill={COLORS.pie[index % COLORS.pie.length]} 
+                          stroke="none"
                         />
                       ))}
                     </Pie>
                     <Tooltip 
-                        contentStyle={CHART_STYLE.tooltipContentStyle}
-                        labelStyle={CHART_STYLE.tooltipLabelStyle}
-                        itemStyle={CHART_STYLE.tooltipItemStyle}
-                        formatter={(value: number, name: string) => [`${value} sesiones`, name]}
+                      contentStyle={CHART_STYLE.tooltipContentStyle}
+                      labelStyle={CHART_STYLE.tooltipLabelStyle}
+                      itemStyle={CHART_STYLE.tooltipItemStyle}
+                      formatter={(value: number, name: string) => [`${value} sesiones`, name]}
                     />
-                    <Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ fontSize: '10px' }} />
+                    <Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ fontSize: '10px' }} /> 
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -321,9 +329,9 @@ export default function SessionsAnalyticsPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={stats} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                     <CartesianGrid 
-                        strokeDasharray="3 3" 
-                        stroke={CHART_STYLE.gridStroke} 
-                        vertical={false} 
+                      strokeDasharray="3 3" 
+                      stroke={CHART_STYLE.gridStroke} 
+                      vertical={false} 
                     />
                     <XAxis
                       dataKey="label"
@@ -344,11 +352,11 @@ export default function SessionsAnalyticsPage() {
                       tickMargin={8}
                     />
                     <Tooltip 
-                        contentStyle={CHART_STYLE.tooltipContentStyle}
-                        labelStyle={CHART_STYLE.tooltipLabelStyle}
-                        itemStyle={CHART_STYLE.tooltipItemStyle}
-                        cursor={{ stroke: CHART_STYLE.cursorStroke, strokeWidth: 1 }}
-                        formatter={(value: number) => [`${value}°`, 'ROM Promedio']}
+                      contentStyle={CHART_STYLE.tooltipContentStyle}
+                      labelStyle={CHART_STYLE.tooltipLabelStyle}
+                      itemStyle={CHART_STYLE.tooltipItemStyle}
+                      cursor={{ stroke: CHART_STYLE.cursorStroke, strokeWidth: 1 }}
+                      formatter={(value: number) => [`${value}°`, 'ROM Promedio']}
                     />
                     <Bar 
                       dataKey="avgRom" 
@@ -372,9 +380,9 @@ export default function SessionsAnalyticsPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={stats} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                     <CartesianGrid 
-                        strokeDasharray="3 3" 
-                        stroke={CHART_STYLE.gridStroke} 
-                        vertical={false} 
+                      strokeDasharray="3 3" 
+                      stroke={CHART_STYLE.gridStroke} 
+                      vertical={false} 
                     />
                     <XAxis
                       dataKey="label"
@@ -395,11 +403,11 @@ export default function SessionsAnalyticsPage() {
                       tickMargin={8}
                     />
                     <Tooltip 
-                        contentStyle={CHART_STYLE.tooltipContentStyle}
-                        labelStyle={CHART_STYLE.tooltipLabelStyle}
-                        itemStyle={CHART_STYLE.tooltipItemStyle}
-                        cursor={{ stroke: CHART_STYLE.cursorStroke, strokeWidth: 1 }}
-                        formatter={(value: number) => [formatDuration(value), 'Duración Total']}
+                      contentStyle={CHART_STYLE.tooltipContentStyle}
+                      labelStyle={CHART_STYLE.tooltipLabelStyle}
+                      itemStyle={CHART_STYLE.tooltipItemStyle}
+                      cursor={{ stroke: CHART_STYLE.cursorStroke, strokeWidth: 1 }}
+                      formatter={(value: number) => [formatDuration(value), 'Duración Total']}
                     />
                     <Bar 
                       dataKey="totalDuration" 
