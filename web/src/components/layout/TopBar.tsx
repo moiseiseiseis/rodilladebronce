@@ -85,12 +85,14 @@ export default function TopBar() {
             <>
               <div className="flex flex-col items-end leading-tight">
                 <span className="text-xs font-medium text-slate-900 dark:text-slate-100">
-                  {user.fullName || user.email}
+                  {/* CORRECCIÓN DESKTOP (Línea 88 original) */}
+                  {user?.fullName || user?.email}
                 </span>
                 <span className="text-[11px] text-[var(--text-muted)]">
-                  {user.role === "CLINICIAN"
+                  {/* CORRECCIÓN DESKTOP */}
+                  {user?.role === "CLINICIAN"
                     ? "Fisioterapeuta"
-                    : user.role === "ADMIN"
+                    : user?.role === "ADMIN"
                     ? "Administrador"
                     : "Usuario"}
                 </span>
@@ -189,12 +191,14 @@ export default function TopBar() {
                   <>
                     <div className="rounded-2xl border border-[var(--border-subtle)] bg-white/70 px-3 py-2 text-[11px] text-[var(--text-muted)] dark:bg-slate-900">
                       <div className="font-medium text-slate-900 dark:text-slate-100">
-                        {user.fullName || user.email}
+                        {/* CORRECCIÓN MOBILE */}
+                        {user?.fullName || user?.email}
                       </div>
                       <div>
-                        {user.role === "CLINICIAN"
+                        {/* CORRECCIÓN MOBILE */}
+                        {user?.role === "CLINICIAN"
                           ? "Fisioterapeuta"
-                          : user.role === "ADMIN"
+                          : user?.role === "ADMIN"
                           ? "Administrador"
                           : "Usuario"}
                       </div>
