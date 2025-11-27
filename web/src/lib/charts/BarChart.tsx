@@ -9,19 +9,31 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
+  Legend, // Añadimos Legend por si se necesita para múltiples barras
 } from "recharts";
+
+// Definimos algunos colores por defecto para las barras (puedes ajustarlos)
+const DEFAULT_COLORS = [
+    "var(--brand-primary)", // Color principal
+    "var(--brand-secondary)", // Color secundario
+    "#F59E0B", // Amarillo
+    "#EF4444", // Rojo
+];
 
 export interface BarChartProps<T extends Record<string, any>> {
   data: T[];
   xKey: keyof T;
-  yKey: keyof T;
+  // CORRECCIÓN 1: yKey ahora acepta una sola clave O un arreglo de claves
+  yKey: keyof T | (keyof T)[];
   xLabelFormatter?: (value: any) => string;
   yLabelFormatter?: (value: any) => string;
+  // Añadimos prop opcional para etiquetas de leyenda si hay múltiples barras
+  legendKeys?: string[];
 }
 
 /**
  * BarChart genérico para:
- * - ROM promedio por ejercicio
+ * - ROM promedio por ejercicio (Ahora soporta múltiples claves como Máx/Avg/Mín)
  * - Sesiones por fase
  * - Sesiones por tipo
  */
@@ -31,8 +43,12 @@ export function BarChart<T extends Record<string, any>>({
   yKey,
   xLabelFormatter,
   yLabelFormatter,
+  legendKeys, // Recibimos las etiquetas de leyenda
 }: BarChartProps<T>) {
   const safeData = Array.isArray(data) ? data : [];
+
+  // CORRECCIÓN 2: Aseguramos que 'yKey' siempre sea un arreglo para poder iterar.
+  const yKeysArray = Array.isArray(yKey) ? yKey : [yKey];
 
   return (
     <ResponsiveContainer width="100%" height={240}>
@@ -74,21 +90,36 @@ export function BarChart<T extends Record<string, any>>({
           }}
           labelStyle={{ fontSize: 11, color: "#e5e7eb", marginBottom: 4 }}
           itemStyle={{ fontSize: 11, color: "#e5e7eb" }}
-          formatter={(value: any) =>
-            yLabelFormatter ? yLabelFormatter(value) : value
-          }
+          // Ajuste en formatter para mostrar la etiqueta de la leyenda
+          formatter={(value: any, name: string) => [
+            yLabelFormatter ? yLabelFormatter(value) : value,
+            name 
+          ]}
           labelFormatter={(value: any) =>
             xLabelFormatter ? xLabelFormatter(value) : String(value)
           }
         />
-        <Bar
-          dataKey={yKey as string}
-          radius={[8, 8, 3, 3]}
-          fill="var(--brand-primary-soft)"
-          stroke="var(--brand-primary)"
-          strokeWidth={1}
-          isAnimationActive={true}
-        />
+
+        {/* CORRECCIÓN 3: Iterar sobre el arreglo de yKeys para renderizar múltiples barras */}
+        {yKeysArray.map((key, index) => (
+            <Bar
+                key={key as string} // Clave única para React
+                dataKey={key as string}
+                // Usar la etiqueta de leyenda si está disponible
+                name={legendKeys?.[index] ?? (key as string)} 
+                radius={[8, 8, 3, 3]}
+                // Asignar color según el índice, o usar un color por defecto
+                fill={DEFAULT_COLORS[index % DEFAULT_COLORS.length]} 
+                stroke={DEFAULT_COLORS[index % DEFAULT_COLORS.length]} 
+                strokeWidth={1}
+                isAnimationActive={true}
+            />
+        ))}
+
+        {/* Muestra la leyenda solo si hay múltiples claves Y se proporcionaron etiquetas */}
+        {yKeysArray.length > 1 && legendKeys && (
+            <Legend wrapperStyle={{ paddingTop: 16 }} />
+        )}
       </ReBarChart>
     </ResponsiveContainer>
   );
