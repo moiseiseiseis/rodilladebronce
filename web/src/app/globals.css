@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light mode */
+  --bg: #f2f2f2;
+  --bg-card: #ffffff;
+  --border-subtle: #e0e0e0;
+
+  --text-main: #111827;
+  --text-muted: #6b7280;
+
+  --brand-primary: #738c18;
+  --brand-primary-soft: #e6edc3;
+  --brand-accent: #bfa521;
+  --brand-accent-soft: #f4e7b8;
+  --brand-warning: #8c6b07;
+  --brand-danger: #8c2c23;
+
+  color-scheme: light;
+}
+
+.dark {
+  /* Dark mode */
+  --bg: #020617;
+  --bg-card: #020617;
+  --border-subtle: #1e293b;
+
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+
+  --brand-primary: #bfa521;
+  --brand-primary-soft: #3f3b13;
+  --brand-accent: #facc15;
+  --brand-accent-soft: #3a320a;
+  --brand-warning: #eab308;
+  --brand-danger: #f97373;
+
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--text-main);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Utilidades opcionales */
+.bg-brand-soft {
+  background-color: var(--brand-primary-soft);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Ajustes de contraste para modo oscuro                             */
+/* ------------------------------------------------------------------ */
+
+/* Todo lo que era "negro" en light, que sea claro en dark */
+.dark .text-slate-900,
+.dark .text-slate-800 {
+  color: #e5e7eb !important; /* text-gray-200 aprox */
+}
+
+.dark .text-slate-700,
+.dark .text-slate-600 {
+  color: #d1d5db !important; /* text-gray-300 aprox */
+}
+
+/* Botones / links que usan brand oscuro */
+.dark .text-brand-700 {
+  color: #facc15 !important; /* amarillo mostaza claro */
+}
+
+/* Bordes muy claros, hacerlos más visibles en dark */
+.dark .border-slate-300,
+.dark .border-slate-200 {
+  border-color: #1f2937 !important; /* gray-800 aprox */
+}
+
+/* Fondos blancos que quedan muy duros en dark → slate-950 */
+.dark .bg-white {
+  background-color: #020617 !important;
+}
