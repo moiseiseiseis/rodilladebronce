@@ -1,20 +1,25 @@
 // src/components/ui/Table.tsx
 
-import type { ReactNode } from "react";
-// Importamos los tipos necesarios de React para manejar props nativas como 'className'
-import type { HTMLAttributes } from "react"; 
+import type { ReactNode, HTMLAttributes } from "react";
 
-// 1. Definición para TableCellProps
-// Extendemos HTMLAttributes<HTMLTableCellElement> para incluir 'className' y otras props de <td>
+// --- INTERFACES DE PROPIEDADES ---
+
+// Interfaz para la celda de encabezado (<th>)
+export interface TableHeaderCellProps extends HTMLAttributes<HTMLTableHeaderCellElement> {
+  children: ReactNode;
+}
+
+// Interfaz para la celda de datos (<td>)
 export interface TableCellProps extends HTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
 }
 
-// 2. Definición para TableRowProps (Ajuste defensivo)
+// Interfaz para la fila (<tr>)
 export interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
     children: ReactNode;
 }
 
+// --- COMPONENTES ---
 
 export function Table({ children }: { children: ReactNode }) {
   return (
@@ -38,7 +43,7 @@ export function TableBody({ children }: { children: ReactNode }) {
   return <tbody>{children}</tbody>;
 }
 
-// Usamos la interfaz ajustada TableRowProps
+// CORREGIDO: TableRow acepta className
 export function TableRow({ children, className, ...props }: TableRowProps) {
   return (
     <tr 
@@ -50,15 +55,19 @@ export function TableRow({ children, className, ...props }: TableRowProps) {
   );
 }
 
-export function TableHeaderCell({ children }: { children: ReactNode }) {
+// CORREGIDO: TableHeaderCell acepta className (Soluciona el error actual)
+export function TableHeaderCell({ children, className, ...props }: TableHeaderCellProps) {
+  // Combinamos la clase predeterminada con la clase pasada por el usuario
+  const finalClassName = `px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 ${className || ''}`;
+  
   return (
-    <th className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+    <th className={finalClassName} {...props}>
       {children}
     </th>
   );
 }
 
-// COMPONENTE CORREGIDO: TableCell ahora acepta className
+// CORREGIDO: TableCell acepta className
 export function TableCell({ children, className, ...props }: TableCellProps) {
   // Combinamos la clase predeterminada con la clase pasada por el usuario
   const finalClassName = `px-3 py-2 text-xs text-slate-800 ${className || ''}`;
